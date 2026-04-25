@@ -1,13 +1,14 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
-import type {
-  AppSettings,
-  TaskParams,
-  InputImage,
-  TaskRecord,
-  ExportData,
+import {
+  DEFAULT_SETTINGS,
+  DEFAULT_PARAMS,
+  type AppSettings,
+  type TaskParams,
+  type InputImage,
+  type TaskRecord,
+  type ExportData,
 } from './types'
-import { DEFAULT_SETTINGS, DEFAULT_PARAMS } from './types'
 import {
   getAllTasks,
   putTask,
@@ -166,6 +167,14 @@ export const useStore = create<AppState>()(
         settings: state.settings,
         params: state.params,
       }),
+      merge: (persisted, current) => {
+        const p = persisted as Partial<Pick<AppState, 'settings' | 'params'>> | undefined
+        return {
+          ...current,
+          settings: { ...DEFAULT_SETTINGS, ...(p?.settings ?? {}) },
+          params: { ...DEFAULT_PARAMS, ...(p?.params ?? {}) },
+        }
+      },
     },
   ),
 )

@@ -104,6 +104,47 @@ export default function SettingsModal() {
               API 配置
             </h4>
             <div className="space-y-4">
+              <div className="block">
+                <span className="block text-xs text-gray-500 dark:text-gray-400 mb-1">API 模式</span>
+                <div className="flex rounded-xl bg-gray-100/80 p-1 dark:bg-white/[0.04]">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const next = { ...draft, apiMode: 'images' as const }
+                      setDraft(next)
+                      commitSettings(next)
+                    }}
+                    className={`flex-1 rounded-lg py-1.5 text-sm font-medium transition ${
+                      draft.apiMode !== 'responses'
+                        ? 'bg-white text-gray-800 shadow-sm dark:bg-gray-700 dark:text-gray-100'
+                        : 'text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200'
+                    }`}
+                  >
+                    Images API
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const next = { ...draft, apiMode: 'responses' as const }
+                      setDraft(next)
+                      commitSettings(next)
+                    }}
+                    className={`flex-1 rounded-lg py-1.5 text-sm font-medium transition ${
+                      draft.apiMode === 'responses'
+                        ? 'bg-white text-gray-800 shadow-sm dark:bg-gray-700 dark:text-gray-100'
+                        : 'text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200'
+                    }`}
+                  >
+                    Responses API
+                  </button>
+                </div>
+                <div className="mt-1 text-[10px] text-gray-400 dark:text-gray-500">
+                  {draft.apiMode === 'responses'
+                    ? '使用 /v1/responses 端点，通过 image_generation 工具生成，中转站兼容性更好'
+                    : '使用 /v1/images/generations 端点，OpenAI 官方直接调用可用'}
+                </div>
+              </div>
+
               <label className="block">
                 <span className="block text-xs text-gray-500 dark:text-gray-400 mb-1">API URL</span>
                 <input
