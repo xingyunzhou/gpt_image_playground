@@ -26,22 +26,34 @@ export default function Lightbox() {
 
   // 图片加载
   useEffect(() => {
+    let cancelled = false
+
     if (!lightboxImageId) {
       setSrc('')
       return
     }
-    const cached = getCachedImage(lightboxImageId)
+
+    setSrc('')
+
+    const imageId = lightboxImageId
+    const cached = getCachedImage(imageId)
     if (cached) {
       setSrc(cached)
     } else {
-      ensureImageCached(lightboxImageId).then((url) => {
-        if (url) setSrc(url)
+      ensureImageCached(imageId).then((url) => {
+        if (!cancelled && url) setSrc(url)
       })
+    }
+
+    return () => {
+      cancelled = true
     }
   }, [lightboxImageId])
 
   // 遮罩图加载
   useEffect(() => {
+    let cancelled = false
+
     if (!lightboxImageId) {
       setMaskImageSrc('')
       return
@@ -52,18 +64,25 @@ export default function Lightbox() {
       return
     }
 
+    setMaskImageSrc('')
+
     const taskWithMask = tasks.find((t) => t.maskTargetImageId === lightboxImageId && t.maskImageId)
     if (taskWithMask?.maskImageId) {
-      const cached = getCachedImage(taskWithMask.maskImageId)
+      const maskImageId = taskWithMask.maskImageId
+      const cached = getCachedImage(maskImageId)
       if (cached) {
         setMaskImageSrc(cached)
       } else {
-        ensureImageCached(taskWithMask.maskImageId).then((url) => {
-          if (url) setMaskImageSrc(url)
+        ensureImageCached(maskImageId).then((url) => {
+          if (!cancelled && url) setMaskImageSrc(url)
         })
       }
     } else {
       setMaskImageSrc('')
+    }
+
+    return () => {
+      cancelled = true
     }
   }, [lightboxImageId, maskDraft?.targetImageId, maskDraft?.maskDataUrl, tasks])
 
