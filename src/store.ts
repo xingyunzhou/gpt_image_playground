@@ -751,12 +751,37 @@ function isFalConnectionRecoverableError(err: unknown) {
   return /abort|network|failed to fetch|fetch failed|load failed|timeout|连接|断开|中断/i.test(message)
 }
 
-function isApiRequestCorsError(err: unknown): boolean {
+function isApiRequestNetworkError(err: unknown): boolean {
   if (err instanceof TypeError) {
     const message = err.message.toLowerCase()
     return /failed to fetch|fetch failed|load failed|networkerror|network request failed/i.test(message)
   }
   return false
+}
+
+function getApiRequestNetworkErrorHint(err: unknown, task: TaskRecord, settings: AppSettings): string | null {
+  if (!isApiRequestNetworkError(err)) return null
+
+  const profile = getTaskApiProfile(settings, task)
+  const elapsedSeconds = Math.max(0, (Date.now() - task.createdAt) / 1000)
+  const usesApiProxy = profile?.apiProxy ?? settings.apiProxy
+
+  if (elapsedSeconds <= 15) {
+    if (usesApiProxy) {
+      return '提示：请求立即失败，请检查 API 代理服务是否正常运行。'
+    }
+    return '提示：接口可能不支持浏览器跨域请求，可开启 API 代理解决。'
+  }
+
+  if (elapsedSeconds >= 55 && elapsedSeconds <= 75) {
+    return '提示：请求等待约 60 秒后被断开，这通常是 Nginx 等反向代理的默认超时，而非接口本身报错。可调大代理的超时时间（如 proxy_read_timeout），或降低图片尺寸/质量后重试。'
+  }
+
+  if (elapsedSeconds >= 110 && elapsedSeconds <= 140) {
+    return '提示：请求等待约 120 秒后被断开，这通常是 Cloudflare 等 CDN/网关的超时限制，而非接口本身报错。如果使用 Cloudflare，可考虑升级套餐或使用不经过 CDN 的直连地址。'
+  }
+
+  return '提示：请求等待较长时间后被断开，通常是反向代理或网关的超时限制，而非接口本身报错。可检查代理超时设置，或降低图片尺寸/质量后重试。'
 }
 
 function getRawErrorPayload(err: unknown): Pick<Partial<TaskRecord>, 'rawImageUrls' | 'rawResponsePayload'> {
@@ -1267,8 +1292,9 @@ async function executeTask(taskId: string) {
       scheduleCustomRecovery(taskId)
     } else {
       let errorMessage = err instanceof Error ? err.message : String(err)
-      if (isApiRequestCorsError(err) && !errorMessage.includes(IMAGE_FETCH_CORS_HINT)) {
-        errorMessage += '\n提示：接口可能不支持浏览器跨域请求，可开启 API 代理解决。'
+      const networkErrorHint = getApiRequestNetworkErrorHint(err, latestTask, useStore.getState().settings)
+      if (networkErrorHint && !errorMessage.includes(IMAGE_FETCH_CORS_HINT)) {
+        errorMessage += `\n${networkErrorHint}`
       }
       updateTaskInStore(taskId, {
         status: 'error',
