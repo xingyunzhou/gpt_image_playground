@@ -223,3 +223,43 @@ input[type="number"] {
     font-size: 16px;
   }
 }
+
+/* contentEditable 中的 @图N 胶囊 tag */
+.mention-tag {
+  display: inline-flex;
+  align-items: center;
+  padding: 1px 8px;
+  margin: 0 4px;
+  border-radius: 9999px;
+  background: #dbeafe;
+  color: #2563eb;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  line-height: 1.5;
+  vertical-align: baseline;
+  user-select: all;
+  cursor: default;
+}
+
+.mention-tag::selection,
+.mention-tag *::selection {
+  background: transparent;
+  color: inherit;
+}
+
+.mention-tag:focus,
+.mention-tag.selected {
+  outline: 1.5px solid #93b4e8;
+  outline-offset: 0px;
+}
+
+@media (prefers-color-scheme: dark) {
+  .mention-tag {
+    background: rgba(59, 130, 246, 0.2);
+    color: #93c5fd;
+  }
+  .mention-tag:focus,
+  .mention-tag.selected {
+    outline-color: #7aa2d4;
+  }
+}
